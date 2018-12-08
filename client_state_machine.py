@@ -5,6 +5,11 @@ Created on Sun Apr  5 00:00:32 2015
 """
 from chat_utils import *
 import json
+#for RSA encryption
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_v1_5
+from Crypto.Hash import SHA
+from Crypto import Random
 
 class ClientSM:
     def __init__(self, s):
