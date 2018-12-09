@@ -18,12 +18,17 @@ class ClientSM:
         self.me = ''
         self.out_msg = ''
         self.s = s
+        #threading
+        self.peer_to_me = ''
+        self.me_to_peer = ''
+        self.system_display = ''
         #encryption
         self.key = RSA.generate(2048)
         myKey = self.me + 'Key.pem'
         f = open(myKey,'wb')
         f.write(self.key.exportKey('PEM'))
         f.close()
+        
 
     def set_state(self, state):
         self.state = state
@@ -48,19 +53,25 @@ class ClientSM:
         if response["status"] == "success":
             self.peer = peer
             self.out_msg += 'You are connected with '+ self.peer + '\n'
+            self.system_display += 'You are connected with '+ self.peer + '\n'
             return (True)
         elif response["status"] == "busy":
             self.out_msg += 'User is busy. Please try again later\n'
+            self.system_display += 'User is busy. Please try again later\n'
         elif response["status"] == "self":
             self.out_msg += 'Cannot talk to yourself (sick)\n'
+            self.system_display += 'Cannot talk to yourself (sick)\n'
         else:
             self.out_msg += 'User is not online, try again later\n'
+            self.system_display += 'User is not online, try again later\n'
+
         return(False)
 
     def disconnect(self):
         msg = json.dumps({"action":"disconnect"})
         mysend(self.s, msg)
         self.out_msg += 'You are disconnected from ' + self.peer + '\n'
+        self.system_display += 'You are disconnected from ' + self.peer + '\n'
         self.peer = ''
 
     def proc(self, my_msg, peer_msg):
@@ -76,17 +87,20 @@ class ClientSM:
 
                 if my_msg == 'q':
                     self.out_msg += 'See you next time!\n'
+                    self.system_display += 'See you next time!\n'
                     self.state = S_OFFLINE
 
                 elif my_msg == 'time':
                     mysend(self.s, json.dumps({"action":"time"}))
                     time_in = json.loads(myrecv(self.s))["results"]
                     self.out_msg += "Time is: " + time_in
+                    self.system_display += "Time is: " + time_in
 
                 elif my_msg == 'who':
                     mysend(self.s, json.dumps({"action":"list"}))
                     logged_in = json.loads(myrecv(self.s))["results"]
                     self.out_msg += 'Here are all the users in the system:\n'
+                    self.system_display += 'Here are all the users in the system:\n'
                     self.out_msg += logged_in
 
                 elif my_msg[0] == 'c':
@@ -96,8 +110,11 @@ class ClientSM:
                         self.state = S_CHATTING
                         self.out_msg += 'Connect to ' + peer + '. Chat away!\n\n'
                         self.out_msg += '-----------------------------------\n'
+                        self.system_display += 'Connect to ' + peer + '. Chat away!\n\n'
+                        self.system_display += '-----------------------------------\n'
                     else:
                         self.out_msg += 'Connection unsuccessful\n'
+                        self.system_display += 'Connection unsuccessful\n'
 
                 elif my_msg[0] == '?':
                     term = my_msg[1:].strip()
@@ -105,8 +122,10 @@ class ClientSM:
                     search_rslt = json.loads(myrecv(self.s))["results"].strip()
                     if (len(search_rslt)) > 0:
                         self.out_msg += search_rslt + '\n\n'
+                        self.system_display += search_rslt + '\n\n'
                     else:
                         self.out_msg += '\'' + term + '\'' + ' not found\n\n'
+                        self.system_display += '\'' + term + '\'' + ' not found\n\n'
 
                 elif my_msg[0] == 'p' and my_msg[1:].isdigit():
                     poem_idx = my_msg[1:].strip()
@@ -115,11 +134,14 @@ class ClientSM:
                     # print(poem)
                     if (len(poem) > 0):
                         self.out_msg += poem + '\n\n'
+                        self.system_display += poem + '\n\n'
                     else:
                         self.out_msg += 'Sonnet ' + poem_idx + ' not found\n\n'
+                        self.system_display += 'Sonnet ' + poem_idx + ' not found\n\n'
 
                 else:
                     self.out_msg += menu
+                    self.system_display += menu
 
             if len(peer_msg) > 0:
                 peer_msg = json.loads(peer_msg)
@@ -129,6 +151,10 @@ class ClientSM:
                     self.out_msg += 'You are connected with ' + self.peer
                     self.out_msg += '. Chat away!\n\n'
                     self.out_msg += '------------------------------------\n'
+                    self.system_display += 'Request from ' + self.peer + '\n'
+                    self.system_display += 'You are connected with ' + self.peer
+                    self.system_display += '. Chat away!\n\n'
+                    self.system_display += '------------------------------------\n'
                     self.state = S_CHATTING
 
 #==============================================================================
@@ -190,16 +216,19 @@ class ClientSM:
                     self.state = S_LOGGEDIN
                 else:
                     self.out_msg += peer_msg["from"] + peer_msg["message"]
+                    self.peer_to_me = peer_msg["from"] + peer_msg["message"]
 
 
             # Display the menu again
             if self.state == S_LOGGEDIN:
                 self.out_msg += menu
+                self.system_display += menu
 #==============================================================================
 # invalid state
 #==============================================================================
         else:
             self.out_msg += 'How did you wind up here??\n'
+            self.system_display += 'How did you wind up here??\n'
             print_state(self.state)
 
         return self.out_msg
