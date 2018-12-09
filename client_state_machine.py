@@ -168,7 +168,7 @@ class ClientSM:
                 
                 msg = peer_msg["message"]
                 message = msg.encode("cp437")
-                print(message)
+                
                 
                 myKey = self.me + 'Key.pem'
                 f = open(myKey,'r')
