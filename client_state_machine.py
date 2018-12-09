@@ -18,6 +18,12 @@ class ClientSM:
         self.me = ''
         self.out_msg = ''
         self.s = s
+        #encryption
+        self.key = RSA.generate(2048)
+        myKey = self.me + 'Key.pem'
+        f = open(myKey,'wb')
+        f.write(self.key.exportKey('PEM'))
+        f.close()
 
     def set_state(self, state):
         self.state = state
@@ -27,6 +33,10 @@ class ClientSM:
 
     def set_myname(self, name):
         self.me = name
+        myKey = self.me + 'Key.pem'
+        f = open(myKey,'wb')
+        f.write(self.key.exportKey('PEM'))
+        f.close()
 
     def get_myname(self):
         return self.me
@@ -127,13 +137,53 @@ class ClientSM:
 #==============================================================================
         elif self.state == S_CHATTING:
             if len(my_msg) > 0:     # my stuff going out
-                mysend(self.s, json.dumps({"action":"exchange", "from":"[" + self.me + "]", "message":my_msg}))
+                
+                #encryption
+                my_msg = my_msg.encode('utf-8')
+                h = SHA.new(my_msg)
+                
+                peerKey = self.peer + 'Key.pem'
+                f = open(peerKey,'r')
+                
+                
+                peerPubKey = RSA.importKey(f.read())
+                
+                cipher = PKCS1_v1_5.new(peerPubKey)
+                ciphertext = cipher.encrypt(my_msg+h.digest())
+                msg = ciphertext.decode("cp437")
+                
+                #end of encryption
+                
+                mysend(self.s, json.dumps({"action":"exchange", "from":"[" + self.me + "]", "message":msg}))
                 if my_msg == 'bye':
                     self.disconnect()
                     self.state = S_LOGGEDIN
                     self.peer = ''
             if len(peer_msg) > 0:    # peer's stuff, coming in
                 peer_msg = json.loads(peer_msg)
+                
+                #decryption
+                dsize = SHA.digest_size
+                sentinel = Random.new().read(15+dsize)      # Let's assume that average data length is 15
+                
+                msg = peer_msg["message"]
+                message = msg.encode("cp437")
+                print(message)
+                
+                myKey = self.me + 'Key.pem'
+                f = open(myKey,'r')
+                myPrivateKey = RSA.importKey(f.read())
+                cipher = PKCS1_v1_5.new(myPrivateKey)
+                message = cipher.decrypt(message, sentinel)
+                
+                
+                message = message[:-dsize]
+                message = message.decode("utf-8")
+                peer_msg["message"] = message
+                
+                
+                #end of decryption
+                
                 if peer_msg["action"] == "connect":
                     self.out_msg += "(" + peer_msg["from"] + " joined)\n"
                 elif peer_msg["action"] == "disconnect":

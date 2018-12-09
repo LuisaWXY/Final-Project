@@ -15,6 +15,7 @@ import pickle as pkl
 from chat_utils import *
 import chat_group as grp
 
+
 class Server:
     def __init__(self):
         self.new_clients = [] #list of new sockets of which the user id is not known
@@ -34,6 +35,8 @@ class Server:
         # self.sonnet = pkl.load(self.sonnet_f)
         # self.sonnet_f.close()
         self.sonnet = indexer.PIndex("AllSonnets.txt")
+        
+        
     def new_client(self, sock):
         #add to all sockets and to new clients
         print('new client...')
