@@ -17,6 +17,14 @@ class Client:
         self.local_msg = ''
         self.peer_msg = ''
         self.args = args
+        
+        #Editted
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM )
+        svr = SERVER if self.args.d == None else (self.args.d, CHAT_PORT)
+        self.socket.connect(svr)
+        self.sm = csm.ClientSM(self.socket)
+
+        self.text_ = ''
 
     def quit(self):
         self.socket.shutdown(socket.SHUT_RDWR)
@@ -26,10 +34,6 @@ class Client:
         return self.name
 
     def init_chat(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM )
-        svr = SERVER if self.args.d == None else (self.args.d, CHAT_PORT)
-        self.socket.connect(svr)
-        self.sm = csm.ClientSM(self.socket)
         reading_thread = threading.Thread(target=self.read_input)
         reading_thread.daemon = True
         reading_thread.start()
@@ -78,11 +82,12 @@ class Client:
         else:               # fix: dup is only one of the reasons
            return(False)
 
-
+    #Editted
     def read_input(self):
         while True:
-            text = sys.stdin.readline()[:-1]
-            self.console_input.append(text) # no need for lock, append is thread safe
+            if self.text_ != '':
+                self.console_input.append(self.text_) # no need for lock, append is thread safe
+                self.text_ = ''
 
     def print_instructions(self):
         self.system_msg += menu
