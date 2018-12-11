@@ -17,7 +17,7 @@ class Client:
         self.local_msg = ''
         self.peer_msg = ''
         self.args = args
-        
+       
         #Editted
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM )
         svr = SERVER if self.args.d == None else (self.args.d, CHAT_PORT)
@@ -78,6 +78,8 @@ class Client:
                 return (True)
             elif response["status"] == 'duplicate':
                 self.system_msg += 'Duplicate username, try again'
+                #editted
+                self.duplicate = True
                 return False
         else:               # fix: dup is only one of the reasons
            return(False)

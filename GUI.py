@@ -23,6 +23,7 @@ class Interface(QWidget):
         self.msg_display.setReadOnly(True)
         self.msg_send = QLineEdit("You can type here!")
         self.send_button = QPushButton("Send")
+        self.msg_send.returnPressed.connect(self.send)
         
         layout = QVBoxLayout()
         
@@ -97,8 +98,7 @@ class Login(QDialog):
         if username != '':
             self.name = username
             self.accept()
-    
-
+           
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     loginwindow = Login()

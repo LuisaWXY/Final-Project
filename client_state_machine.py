@@ -19,8 +19,7 @@ class ClientSM:
         self.out_msg = ''
         self.s = s
         #threading
-        self.peer_to_me = ''
-        self.me_to_peer = ''
+        self.peer_display = ''
         self.system_display = ''
         #encryption
         self.key = RSA.generate(2048)
@@ -242,7 +241,7 @@ class ClientSM:
                     #end of decryption
                     
                     self.out_msg += peer_msg["from"] + peer_msg["message"]
-                    self.peer_to_me = peer_msg["from"] + peer_msg["message"]
+                    self.peer_display = peer_msg["from"] + peer_msg["message"]
 
 
             # Display the menu again
