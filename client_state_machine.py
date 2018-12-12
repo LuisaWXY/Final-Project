@@ -5,11 +5,13 @@ Created on Sun Apr  5 00:00:32 2015
 """
 from chat_utils import *
 import json
+import indexer
 #for RSA encryption
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_v1_5
 from Crypto.Hash import SHA
 from Crypto import Random
+
 
 class ClientSM:
     def __init__(self, s):
@@ -18,6 +20,7 @@ class ClientSM:
         self.me = ''
         self.out_msg = ''
         self.s = s
+        self.history = {}
         #threading
         self.peer_display = ''
         self.system_display = ''
@@ -118,11 +121,19 @@ class ClientSM:
 
                 elif my_msg[0] == '?':
                     term = my_msg[1:].strip()
-                    mysend(self.s, json.dumps({"action":"search", "target":term}))
-                    search_rslt = json.loads(myrecv(self.s))["results"].strip()
+                    #mysend(self.s, json.dumps({"action":"search", "target":term}))
+                    #search_rslt = json.loads(myrecv(self.s))["results"].strip()
+                    #search_rslt = '\n'.join([x[-1] for x in self.history[self.me].search(term)])
+                    
+                    search_rslt = []
+                    for i in self.history[self.me]:
+                        if term in i:
+                            search_rslt.append(i)       
+                    
+                    
                     if (len(search_rslt)) > 0:
-                        self.out_msg += search_rslt + '\n\n'
-                        self.system_display += search_rslt + '\n\n'
+                        self.out_msg += str(search_rslt) + '\n\n'
+                        self.system_display += str(search_rslt) + '\n\n'
                     else:
                         self.out_msg += '\'' + term + '\'' + ' not found\n\n'
                         self.system_display += '\'' + term + '\'' + ' not found\n\n'
@@ -164,7 +175,12 @@ class ClientSM:
         elif self.state == S_CHATTING:
             if len(my_msg) > 0:     # my stuff going out
                 
-                                    
+                said = text_proc(my_msg, '[' + self.me + ']')
+                if self.me in self.history:
+                    self.history[self.me].append(said) 
+                else: 
+                    self.history[self.me] = [said]
+                   
                 if my_msg == 'bye':       
                     
                     #encryption
@@ -242,6 +258,13 @@ class ClientSM:
                     peer_msg["message"] = message
                     
                     #end of decryption
+                    
+                    said2 = text_proc(message, peer_msg["from"])
+                    if self.me in self.history:
+                        self.history[self.me].append(said2) 
+                    else: 
+                        self.history[self.me] = [said2]
+            
                     
                     self.out_msg += peer_msg["from"] + peer_msg["message"]
                     self.peer_display = peer_msg["from"] + peer_msg["message"]

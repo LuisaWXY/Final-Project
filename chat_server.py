@@ -124,8 +124,13 @@ class Server:
                 from_name = self.logged_sock2name[from_sock]
                 the_guys = self.group.list_me(from_name)
                 #said = msg["from"]+msg["message"]
+                
                 said2 = text_proc(msg["message"], from_name)
                 self.indices[from_name].add_msg_and_index(said2)
+                
+                
+                ####?
+                
                 #show message hacked from server
                 print(msg["message"])
                 for g in the_guys[1:]:
