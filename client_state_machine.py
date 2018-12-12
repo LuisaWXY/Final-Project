@@ -101,6 +101,7 @@ class ClientSM:
                     self.out_msg += 'Here are all the users in the system:\n'
                     self.system_display += 'Here are all the users in the system:\n'
                     self.out_msg += logged_in
+                    self.system_display += logged_in
 
                 elif my_msg[0] == 'c':
                     peer = my_msg[1:]
